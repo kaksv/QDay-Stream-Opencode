@@ -1,0 +1,38 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# builds
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+
+# foundry
+contracts/out/
+contracts/cache/
+
+# env & secrets
+.env
+.env.*
+!**/.env.example
+*.pem
+*.key
+contracts/.env
+
+# deployment secrets / local only
+web/.vercel/
+.vercel/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
+
+# test output
+coverage/
+playwright-report/
+test-results/
