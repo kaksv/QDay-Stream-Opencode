@@ -15,7 +15,8 @@ import {
   TUSD8,
 } from "@/lib/config";
 import { aevumTestnet } from "@/lib/chain";
-import { useClock } from "@/lib/providers/clock-provider";
+import { getClockSnapshot } from "@/lib/providers/clock-store";
+import { resolveSubmissionWindow } from "@/lib/time";
 import { describeTxError } from "@/lib/errors";
 import { formatTokenAmount } from "@/lib/format";
 
@@ -30,13 +31,26 @@ export type CreateStep =
 
 export type CreateMode = "permit" | "approve";
 
+type CreateArgs = {
+  recipient: Address;
+  amount: bigint;
+  /**
+   * Absolute start timestamp for a scheduled stream, or null for "start now".
+   * "Start now" is resolved after the wallet prompt, immediately before the
+   * create transaction, so a slow permit signature cannot push the start into
+   * the past and make the contract revert with StartTimeInPast.
+   */
+  startTime: bigint | null;
+  durationSeconds: number;
+  mode: CreateMode;
+};
+
 export function useCreateStream() {
   const config = useConfig();
   const queryClient = useQueryClient();
   const { address, chainId } = useAccount();
   const { signTypedDataAsync } = useSignTypedData();
   const { writeContractAsync } = useWriteContract();
-  const { nowMs } = useClock();
   const [step, setStep] = useState<CreateStep>("idle");
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
@@ -60,15 +74,14 @@ export function useCreateStream() {
       recipient,
       amount,
       startTime,
-      endTime,
+      durationSeconds,
       mode,
-    }: {
-      recipient: Address;
-      amount: bigint;
-      startTime: bigint;
-      endTime: bigint;
-      mode: CreateMode;
-    }): Promise<{ ok: boolean; hash?: `0x${string}`; streamId?: bigint; cancelled?: boolean }> => {
+    }: CreateArgs): Promise<{
+      ok: boolean;
+      hash?: `0x${string}`;
+      streamId?: bigint;
+      cancelled?: boolean;
+    }> => {
       setError(null);
       setTxHash(null);
       setStreamId(null);
@@ -95,6 +108,11 @@ export function useCreateStream() {
       let hash: `0x${string}` | null = null;
 
       try {
+        let permitDeadline = 0n;
+        let permit:
+          | { v: number; r: `0x${string}`; s: `0x${string}` }
+          | null = null;
+
         if (mode === "permit") {
           setStep("signing");
           const nonce = await readContract(config, {
@@ -104,8 +122,8 @@ export function useCreateStream() {
             args: [address],
             chainId: aevumTestnet.id,
           });
-          const chainNow = Math.floor((nowMs || Date.now()) / 1_000);
-          const deadline = BigInt(chainNow + 30 * 60);
+          const signedAt = Math.floor(getClockSnapshot() / 1_000);
+          permitDeadline = BigInt(signedAt + 30 * 60);
 
           const signature = await signTypedDataAsync({
             domain: {
@@ -121,35 +139,21 @@ export function useCreateStream() {
               spender: STREAMPAY_ADDRESS,
               value: amount,
               nonce,
-              deadline,
+              deadline: permitDeadline,
             },
           });
 
           const parsed = parseSignature(signature);
-          const v =
-            parsed.v !== undefined
-              ? Number(parsed.v)
-              : parsed.yParity === 1
-                ? 28
-                : 27;
-
-          setStep("submitting");
-          hash = await writeContractAsync({
-            address: STREAMPAY_ADDRESS,
-            abi: streamPayAbi,
-            functionName: "createStreamWithPermit",
-            args: [
-              recipient,
-              amount,
-              startTime,
-              endTime,
-              deadline,
-              v,
-              parsed.r,
-              parsed.s,
-            ],
-            chainId: aevumTestnet.id,
-          });
+          permit = {
+            v:
+              parsed.v !== undefined
+                ? Number(parsed.v)
+                : parsed.yParity === 1
+                  ? 28
+                  : 27,
+            r: parsed.r,
+            s: parsed.s,
+          };
         } else {
           const allowance = await readContract(config, {
             address: TUSD8.address,
@@ -179,13 +183,52 @@ export function useCreateStream() {
             }
             queryClient.invalidateQueries({ queryKey: ["readContract"] });
           }
+        }
 
-          setStep("submitting");
+        // Resolve the window as late as possible: any wallet prompt above may
+        // have taken a while, and a start time in the past is a contract revert.
+        const window = resolveSubmissionWindow({
+          nowMs: getClockSnapshot(),
+          scheduledStart: startTime,
+          durationSeconds,
+        });
+
+        if (!window.ok) {
+          const message =
+            window.error === "scheduled-start-passed"
+              ? "Your scheduled start passed while you were signing. Pick a new start time."
+              : "The duration must be at least one second.";
+          setStep("error");
+          setError(message);
+          toast.error("Stream not created", { description: message });
+          return { ok: false };
+        }
+
+        setStep("submitting");
+
+        if (mode === "permit" && permit) {
+          hash = await writeContractAsync({
+            address: STREAMPAY_ADDRESS,
+            abi: streamPayAbi,
+            functionName: "createStreamWithPermit",
+            args: [
+              recipient,
+              amount,
+              window.startTime,
+              window.endTime,
+              permitDeadline,
+              permit.v,
+              permit.r,
+              permit.s,
+            ],
+            chainId: aevumTestnet.id,
+          });
+        } else {
           hash = await writeContractAsync({
             address: STREAMPAY_ADDRESS,
             abi: streamPayAbi,
             functionName: "createStream",
-            args: [recipient, amount, startTime, endTime],
+            args: [recipient, amount, window.startTime, window.endTime],
             chainId: aevumTestnet.id,
           });
         }
@@ -239,7 +282,6 @@ export function useCreateStream() {
       chainId,
       config,
       invalidate,
-      nowMs,
       queryClient,
       signTypedDataAsync,
       writeContractAsync,

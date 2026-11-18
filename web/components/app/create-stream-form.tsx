@@ -46,11 +46,11 @@ import {
   parseTokenInput,
 } from "@/lib/format";
 import { QDAY, TUSD8, IS_CONTRACT_CONFIGURED } from "@/lib/config";
+import { START_BUFFER_SECONDS } from "@/lib/time";
 import { isSameAddress } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
-const START_BUFFER_SECONDS = 20;
-const MIN_SCHEDULE_BUFFER_SECONDS = 15;
+const MIN_SCHEDULE_BUFFER_SECONDS = 60;
 
 function nowUnix(nowMs: number) {
   return Math.floor((nowMs || Date.now()) / 1_000);
@@ -177,7 +177,7 @@ export function CreateStreamForm() {
     if (startMode !== "scheduled") return null;
     if (scheduledStart == null) return "Choose a start date and time.";
     if (scheduledStart < nowUnix(nowMs) + MIN_SCHEDULE_BUFFER_SECONDS) {
-      return "Scheduled starts must be at least a few seconds in the future.";
+      return "Scheduled starts must be at least a minute in the future.";
     }
     return null;
   }, [startMode, scheduledStart, nowMs]);
@@ -204,16 +204,6 @@ export function CreateStreamForm() {
     ? Number(amount) / 1_000_000 / durationSeconds
     : 0;
 
-  function resolvedTimes(): { startTime: bigint; endTime: bigint } | null {
-    if (!formValid) return null;
-    const start =
-      startMode === "now"
-        ? BigInt(nowUnix(nowMs) + START_BUFFER_SECONDS)
-        : BigInt(scheduledStart as number);
-    const end = start + BigInt(durationSeconds);
-    return { startTime: start, endTime: end };
-  }
-
   function handleReview() {
     if (!formValid) {
       if (!recipientError && !recipient) toast.error("Add a recipient address.");
@@ -229,13 +219,15 @@ export function CreateStreamForm() {
   }
 
   async function handleCreate() {
-    const times = resolvedTimes();
-    if (!address || !amount || !times) return;
+    if (!address || !amount) return;
     const result = await create({
       recipient: recipient.trim() as Address,
       amount,
-      startTime: times.startTime,
-      endTime: times.endTime,
+      startTime:
+        startMode === "now" || scheduledStart == null
+          ? null
+          : BigInt(scheduledStart),
+      durationSeconds,
       mode,
     });
     if (!result.ok) return;
@@ -478,7 +470,7 @@ export function CreateStreamForm() {
                 <span>
                   <span className="block text-[13px] font-medium">Start now</span>
                   <span className="mt-0.5 block text-[11.5px] leading-5 text-faint">
-                    Begins at the next block after confirmation.
+                    Starts a few seconds after you confirm, timed from that block.
                   </span>
                 </span>
               </button>
