@@ -4,6 +4,28 @@ Two deployments: the **contract** on QDay Aevum Testnet, and the **web app** on
 Vercel. The app reads the contract address from a checked-in deployment record,
 so deploy the contract first.
 
+## Current deployment
+
+| | |
+|---|---|
+| App | https://streampay-five.vercel.app |
+| Network | QDay Aevum Testnet (chain `44005`) |
+| StreamPay | `0xe149A6cb0694382c88B14c7608C50a6151DE79cD` |
+| Deploy block | `3488110` |
+| Deployed at | 2026-11-18 11:35 UTC |
+| Deployer | `0xDD463C81cb2fA0e95b55c5d7696d8a9755cb1Af2` |
+| Token | tUSD8 `0x456569838f1d43009A91ebA4263147Afd7233483` |
+| Explorer | https://explorer-test.qday.info/address/0xe149A6cb0694382c88B14c7608C50a6151DE79cD |
+
+Records: [`deployments/aevum.json`](./deployments/aevum.json) and
+[`web/lib/deployments/aevum.json`](./web/lib/deployments/aevum.json).
+
+> The deployed bytecode was produced outside this repo's default Foundry profile
+> (its metadata reports solc 0.8.24, but the runtime is larger than the
+> optimizer-200 build). Explorer verification therefore needs the compiler
+> settings used for that build, or a redeploy with `script/Deploy.s.sol` followed
+> by the verification command below.
+
 ## 0. Prerequisites
 
 - Foundry (`forge`, `cast`) on `PATH`
