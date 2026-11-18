@@ -76,6 +76,15 @@ export function describeTxError(error: unknown): TxErrorInfo {
     };
   }
 
+  if (lower.includes("starttimeinpast") || lower.includes("invalidduration")) {
+    return {
+      title: "The stream start slipped by",
+      description:
+        "The start time passed while your wallet was waiting. Nothing was sent — try again and it will use a fresh start time.",
+      rejected: false,
+    };
+  }
+
   if (lower.includes("insufficient funds")) {
     return {
       title: "Not enough tQDAY for gas",

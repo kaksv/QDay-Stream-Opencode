@@ -8,7 +8,7 @@
  */
 
 /** Forward slack for an immediate stream, in seconds. */
-export const START_BUFFER_SECONDS = 20;
+export const START_BUFFER_SECONDS = 60;
 
 /** Smallest lead for a user-chosen start, in seconds. */
 const MIN_SCHEDULE_LEAD_SECONDS = 5n;

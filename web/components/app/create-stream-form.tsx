@@ -470,7 +470,7 @@ export function CreateStreamForm() {
                 <span>
                   <span className="block text-[13px] font-medium">Start now</span>
                   <span className="mt-0.5 block text-[11.5px] leading-5 text-faint">
-                    Starts a few seconds after you confirm, timed from that block.
+                    Begins after you confirm, then runs the full duration.
                   </span>
                 </span>
               </button>
