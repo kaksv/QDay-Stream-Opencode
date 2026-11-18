@@ -23,10 +23,10 @@ transactions, no fees.
 
 | Field | Link |
 |---|---|
-| Live app | `[VERCEL_URL]` |
-| Repository | `[GITHUB_URL]` |
-| Contract | `[STREAMPAY_ADDRESS]` |
-| Explorer | `https://explorer-test.qday.info/address/[STREAMPAY_ADDRESS]` |
+| Live app | https://streampay-five.vercel.app |
+| Repository | https://github.com/kaksv/QDay-Stream-Opencode |
+| Contract | `0xe149A6cb0694382c88B14c7608C50a6151DE79cD` |
+| Explorer | https://explorer-test.qday.info/address/0xe149A6cb0694382c88B14c7608C50a6151DE79cD |
 | Demo video | `[DEMO_VIDEO_URL]` |
 | Network | QDay Aevum Testnet, chain 44005 |
 
@@ -103,10 +103,11 @@ no monetary value and no expectation of value. The contract is unaudited.
 
 ## Final checklist
 
-- [ ] Contract deployed to Aevum and verified on the explorer
+- [x] Contract deployed to Aevum
+- [ ] Contract verified on the explorer
 - [ ] `deployments/aevum.json` and `web/lib/deployments/aevum.json` updated
-- [ ] Web app deployed to Vercel with `NEXT_PUBLIC_APP_URL` set
+- [x] Web app deployed to Vercel with `NEXT_PUBLIC_APP_URL` set
 - [ ] Demo wallet flags absent from the production build
 - [ ] Demo video recorded (see `DEMO.md`)
-- [ ] Repository public, README links working
+- [x] Repository public, README links working
 - [ ] Submission form links checked in an incognito window

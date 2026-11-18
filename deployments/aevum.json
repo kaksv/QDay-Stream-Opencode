@@ -1,13 +1,13 @@
 {
   "chainId": 44005,
   "contract": "StreamPay.sol:StreamPay",
-  "deployBlock": 0,
-  "deployedAt": 0,
-  "deployer": "0x0000000000000000000000000000000000000000",
+  "deployBlock": 3488110,
+  "deployedAt": 1795001700,
+  "deployer": "0xDD463C81cb2fA0e95b55c5d7696d8a9755cb1Af2",
   "explorer": "https://explorer-test.qday.info",
   "network": "QDay Aevum Testnet",
   "rpcUrl": "https://rpc-test.qday.info",
-  "streamPay": "0x0000000000000000000000000000000000000000",
+  "streamPay": "0xe149A6cb0694382c88B14c7608C50a6151DE79cD",
   "token": "0x456569838f1d43009A91ebA4263147Afd7233483",
   "tokenDecimals": 6,
   "tokenSymbol": "tUSD8"

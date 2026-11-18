@@ -12,6 +12,9 @@ and no fee.
 
 Built for **Aevum Builder Challenge #1**.
 
+**Live app:** https://streampay-five.vercel.app · **Contract:**
+[`0xe149A6cb0694382c88B14c7608C50a6151DE79cD`](https://explorer-test.qday.info/address/0xe149A6cb0694382c88B14c7608C50a6151DE79cD)
+
 <p>
   <img alt="Solidity" src="https://img.shields.io/badge/Solidity-0.8.24-363636?logo=solidity" />
   <img alt="Foundry" src="https://img.shields.io/badge/tested%20with-Foundry-000000" />
@@ -231,7 +234,7 @@ detail page always agree.
 | Gas token | tQDAY (18 decimals) |
 | Payment token | tUSD8 `0x456569838f1d43009A91ebA4263147Afd7233483` (6 decimals) |
 | Multicall3 | `0xcA11bde05977b3631167028862bE2a173976CA11` |
-| StreamPay | see [`deployments/aevum.json`](./deployments/aevum.json) |
+| StreamPay | `0xe149A6cb0694382c88B14c7608C50a6151DE79cD` ([explorer](https://explorer-test.qday.info/address/0xe149A6cb0694382c88B14c7608C50a6151DE79cD)) |
 
 tUSD8 also implements EIP-2612 with EIP-712 domain `("tUSD8", "2", 44005)`. The
 domain separator was verified on-chain before the permit flow was shipped.
