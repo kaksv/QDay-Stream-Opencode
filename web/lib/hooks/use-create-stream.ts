@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useConfig, useAccount, useSignTypedData, useWriteContract } from "wagmi";
-import { readContract, waitForTransactionReceipt } from "wagmi/actions";
+import { readContract, simulateContract, waitForTransactionReceipt } from "wagmi/actions";
 import { parseEventLogs, parseSignature, type Address } from "viem";
 import { toast } from "sonner";
 import { streamPayAbi } from "@/lib/abi/streamPay";
@@ -205,6 +205,46 @@ export function useCreateStream() {
         }
 
         setStep("submitting");
+
+        // Dry-run on the latest block before asking the wallet to send anything.
+        // This catches a stale start window or an allowance that never landed and
+        // turns it into a readable message instead of a reverted transaction.
+        try {
+          if (mode === "permit" && permit) {
+            await simulateContract(config, {
+              address: STREAMPAY_ADDRESS,
+              abi: streamPayAbi,
+              functionName: "createStreamWithPermit",
+              args: [
+                recipient,
+                amount,
+                window.startTime,
+                window.endTime,
+                permitDeadline,
+                permit.v,
+                permit.r,
+                permit.s,
+              ],
+              account: address,
+              chainId: aevumTestnet.id,
+            });
+          } else {
+            await simulateContract(config, {
+              address: STREAMPAY_ADDRESS,
+              abi: streamPayAbi,
+              functionName: "createStream",
+              args: [recipient, amount, window.startTime, window.endTime],
+              account: address,
+              chainId: aevumTestnet.id,
+            });
+          }
+        } catch (caught) {
+          const info = describeTxError(caught);
+          setStep("error");
+          setError(info.description);
+          toast.error(info.title, { description: info.description });
+          return { ok: false, cancelled: info.rejected };
+        }
 
         if (mode === "permit" && permit) {
           hash = await writeContractAsync({
